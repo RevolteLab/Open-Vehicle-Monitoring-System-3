@@ -601,6 +601,13 @@ config OVMS_VEHICLE_BYD_ATTO3
     help
         Enable support for BYD Atto 3
 
+config OVMS_VEHICLE_RANGEROVER
+    bool "Include support for Range Rover vehicles"
+    default y
+    depends on OVMS
+    help
+        Enable to include support for Range Rover vehicles.
+
 config OVMS_VEHICLE_RXTASK_STACK
     int "Stack size for ISOTP Poller RX task"
     default 6144
