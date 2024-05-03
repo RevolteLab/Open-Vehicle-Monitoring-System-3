@@ -330,6 +330,12 @@ void OvmsVehicleMitsubishi::IncomingFrameCan1(CAN_frame_t* p_frame)
       break;
       }
 
+      case 0x288://High voltage value
+      {
+          ms_v_ht_voltage->SetValue(d[4] * 2, Volts);
+          break;
+      }
+
       case 0x298://freq10 // Motor temperature and RPM
       {
         StandardMetrics.ms_v_mot_temp->SetValue(d[3] - 40);

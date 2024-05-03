@@ -136,6 +136,8 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
     OvmsMetricFloat* ms_v_bat_cac_rem = MyMetrics.InitFloat("xmi.v.bat.cac.rem", 10, 0, AmpHours);
     OvmsMetricFloat* ms_v_bat_max_input = MyMetrics.InitFloat("xmi.v.bat.max.input", 10, 0, kW);
     OvmsMetricFloat* ms_v_bat_max_output = MyMetrics.InitFloat("xmi.v.bat.max.output", 10, 0, kW);
+    
+    OvmsMetricFloat* ms_v_ht_voltage = MyMetrics.InitFloat("xmi.v.ht.voltage", 10, 0, Volts);
 
     void vehicle_mitsubishi_car_on(bool isOn);
 
