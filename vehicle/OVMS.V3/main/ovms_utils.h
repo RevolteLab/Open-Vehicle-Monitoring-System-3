@@ -707,4 +707,128 @@ class ovms_callback_register_t
       }
   };
 
+
+  /** Get the variable and null it in an atomic way.
+   * Should probably be used sparingly.
+   */
+  template<typename T>
+  T Atomic_Swap( volatile T &variable, T newVal)
+    {
+    return __atomic_exchange_n(&variable, newVal, __ATOMIC_SEQ_CST);
+    }
+  /** Get the variable and null it in an atomic way.
+   * Should probably be used sparingly.
+   * @return true if successful.
+   */
+  template<typename T>
+  T Atomic_GetAndNull( volatile T &variable)
+    {
+    return Atomic_Swap<T>(variable, nullptr);
+    }
+
+  template<typename T>
+  T Atomic_Get( volatile const T &variable)
+    {
+    return variable;
+    }
+  template<typename T>
+  T Atomic_Increment( volatile T &variable, T amt)
+    {
+    return __atomic_fetch_add(&variable, amt, __ATOMIC_SEQ_CST);
+    }
+
+  template<typename T>
+  T Atomic_Subtract( volatile T &variable, T amt)
+    {
+    return __atomic_fetch_sub(&variable, amt, __ATOMIC_SEQ_CST);
+    }
+
+  /**
+   * Calls a function if the lifetime of the object is less
+   * than the specified constructed value.
+   * Doesn't call the function if the tick count wraps.
+   */
+  class timer_util_t
+    {
+    public:
+      typedef std::function<void(uint64_t start, uint64_t finish)> finish_proc_t;
+    private:
+      uint64_t m_start;
+      finish_proc_t m_cb;
+      inline static uint64_t getTime() {
+        return esp_timer_get_time();
+      }
+    public:
+      timer_util_t(const finish_proc_t &timeup_cb )
+        : m_start(getTime()),
+          m_cb(timeup_cb)
+        {
+        }
+      ~timer_util_t();
+    };
+  constexpr unsigned floorlog2(unsigned x)
+    {
+    return x == 1 ? 0 : 1+floorlog2(x >> 1);
+    }
+  /* Maintain a smoothed average using shifts for division.
+   * T should be an integer type
+   * N needs to be a power of 2
+   */
+  template <typename T, unsigned N>
+  class average_util_t
+    {
+    private:
+      T m_ave;
+    public:
+      average_util_t() : m_ave(0) {}
+
+      static const uint8_t _BITS = floorlog2(N);
+
+      void add( T val)
+        {
+        static_assert(N == (1 << _BITS), "N must be a power of 2");
+        m_ave = (((N-1) * m_ave) + val) >> _BITS;
+        }
+      T get() { return m_ave; }
+      operator T() { return m_ave; }
+      void reset()
+        {
+        m_ave = 0;
+        }
+    };
+  /* Assists in maintaining smoothed average for a period.
+   * T should be an integer type
+   * N needs to be a power of 2
+   */
+  template <typename T, unsigned N>
+  class average_accum_util_t
+    {
+    private:
+      T m_sum;
+      average_util_t<T,N> ave;
+    public:
+      average_accum_util_t()
+        : m_sum(0)
+        {}
+
+      // Add to the current sum.
+      void add(T val)
+        {
+        m_sum += val;
+        }
+      // Pushes the current sum into the averager.
+      void push()
+        {
+        ave.add(m_sum);
+        m_sum = 0;
+        }
+      T get() { return ave.get(); }
+      T sum() { return m_sum; }
+      void reset()
+        {
+        m_sum = 0;
+        ave.reset();
+        }
+    };
+
 #endif // __OVMS_UTILS_H__
